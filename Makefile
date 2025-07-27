@@ -41,4 +41,4 @@ test: ## Run the unit tests
 
 .PHONY: test-cov
 test-cov: test ## Run the unit tests with coverage
-	go tool cover -html=coverage.out -o build/coverage.html
+	go tool cover -html=coverage.out -o coverage.html

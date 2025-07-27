@@ -1,6 +1,7 @@
 # Generated
 diagram.md
 import-visualiser
+coverage.*
 
 # Arguments
 pyproject.toml

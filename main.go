@@ -84,25 +84,12 @@ var Flags = struct {
 
 // Main runs the application
 func main() {
-	flag.IntVar(&Flags.Part, "part", -1, "The part we want to focus on e.g. web.x.y.z, if we pick 1, we will show x")
-	flag.StringVar(&Flags.ConfigFilePath, "config", "pyproject.toml", "Path to the TOML configuration file")
-	flag.StringVar(&Flags.OnlySource, "only-source", "", "Only show edges from this source package")
-	flag.StringVar(&Flags.DestinationType, "destination-type", "", "Filter edges by destination type (e.g., 'package', 'module')")
-	flag.StringVar(&Flags.Renderer, "renderer", "stdout", "Output renderer: 'stdout' or 'mermaid'")
-	flag.Parse()
+	handleFlags()
 
-	// Read TOML file
-	data, err := os.ReadFile(Flags.ConfigFilePath)
+	config, err := readConfig()
 	if err != nil {
-		fmt.Println("Error reading TOML file:", err)
+		fmt.Println("Error reading configuration:", err)
 		os.Exit(1)
-	}
-
-	// Parse Config
-	var config Config
-	if err := toml.Unmarshal(data, &config); err != nil {
-		fmt.Println("Error parsing TOML:", err)
-		os.Exit(2)
 	}
 
 	// Collect edges
@@ -134,8 +121,35 @@ func main() {
 
 	err = handleRendering(edges)
 	if err != nil {
-		os.Exit(3)
+		os.Exit(2)
 	}
+}
+
+// handleFlags initializes command line flags
+func handleFlags() {
+	flag.IntVar(&Flags.Part, "part", -1, "The part we want to focus on e.g. web.x.y.z, if we pick 1, we will show x")
+	flag.StringVar(&Flags.ConfigFilePath, "config", "pyproject.toml", "Path to the TOML configuration file")
+	flag.StringVar(&Flags.OnlySource, "only-source", "", "Only show edges from this source package")
+	flag.StringVar(&Flags.DestinationType, "destination-type", "", "Filter edges by destination type (e.g., 'package', 'module')")
+	flag.StringVar(&Flags.Renderer, "renderer", "stdout", "Output renderer: 'stdout' or 'mermaid'")
+	flag.Parse()
+}
+
+// readConfig reads the TOML configuration file and returns a Config struct
+func readConfig() (*Config, error) {
+	// Read TOML file
+	data, err := os.ReadFile(Flags.ConfigFilePath)
+	if err != nil {
+		return nil, fmt.Errorf("error reading TOML file: %w", err)
+	}
+
+	// Parse Config
+	var config Config
+	if err := toml.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("error parsing TOML: %w", err)
+	}
+
+	return &config, nil
 }
 
 // handleRendering processes the edges and writes them using the specified renderer

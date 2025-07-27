@@ -9,6 +9,42 @@ import (
 	"github.com/pelletier/go-toml/v2"
 )
 
+// Output defines the strategy interface for writing edges
+type Output interface {
+	Write(edges []string) error
+}
+
+// MermaidOutput writes edges to diagram.md in Mermaid format
+type MermaidOutput struct{}
+
+func (m MermaidOutput) Write(edges []string) error {
+	f, err := os.Create("diagram.md")
+	if err != nil {
+		fmt.Println("Error creating diagram.md:", err)
+		return err
+	}
+	defer f.Close()
+
+	fmt.Fprintln(f, "```mermaid")
+	fmt.Fprintln(f, "graph TD")
+	for _, edge := range edges {
+		fmt.Fprintln(f, edge)
+	}
+	fmt.Fprintln(f, "```")
+	return nil
+}
+
+// StdoutOutput writes edges to stdout
+type StdoutOutput struct{}
+
+func (s StdoutOutput) Write(edges []string) error {
+	fmt.Println("graph TD")
+	for _, edge := range edges {
+		fmt.Println(edge)
+	}
+	return nil
+}
+
 // Contract represents a contract in the TOML configuration
 type Contract struct {
 	Name          string   `toml:"name"`
@@ -33,15 +69,17 @@ type Config struct {
 
 // Flags holds the command line flags
 var Flags = struct {
-	Part            int
 	ConfigFilePath  string
-	OnlySource      string
 	DestinationType string
+	OnlySource      string
+	Renderer        string
+	Part            int
 }{
-	Part:            -1,
 	ConfigFilePath:  "pyproject.toml",
-	OnlySource:      "",
 	DestinationType: "",
+	OnlySource:      "",
+	Renderer:        "stdout",
+	Part:            -1,
 }
 
 // Main runs the application
@@ -50,6 +88,7 @@ func main() {
 	flag.StringVar(&Flags.ConfigFilePath, "config", "pyproject.toml", "Path to the TOML configuration file")
 	flag.StringVar(&Flags.OnlySource, "only-source", "", "Only show edges from this source package")
 	flag.StringVar(&Flags.DestinationType, "destination-type", "", "Filter edges by destination type (e.g., 'package', 'module')")
+	flag.StringVar(&Flags.Renderer, "renderer", "stdout", "Output renderer: 'stdout' or 'mermaid'")
 	flag.Parse()
 
 	// Read TOML file
@@ -93,20 +132,27 @@ func main() {
 		}
 	}
 
-	// Render Mermaid
-	f, err := os.Create("diagram.md")
+	err = handleRendering(edges)
 	if err != nil {
-		fmt.Println("Error creating diagram.md:", err)
 		os.Exit(3)
 	}
-	defer f.Close()
+}
 
-	fmt.Fprintln(f, "```mermaid")
-	fmt.Fprintln(f, "graph TD")
-	for _, edge := range edges {
-		fmt.Fprintln(f, edge)
+// handleRendering processes the edges and writes them using the specified renderer
+func handleRendering(edges []string) error {
+	var output Output
+
+	switch Flags.Renderer {
+	case "mermaid":
+		output = MermaidOutput{}
+	case "stdout":
+		output = StdoutOutput{}
+	default:
+		fmt.Println("Invalid renderer specified. Use 'stdout' or 'mermaid'.")
+		os.Exit(4)
 	}
-	fmt.Fprintln(f, "```")
+
+	return output.Write(edges)
 }
 
 // getPartValue extracts the relevant part of the import path based on the

@@ -33,13 +33,15 @@ type Config struct {
 
 // Flags holds the command line flags
 var Flags = struct {
-	Part           int
-	ConfigFilePath string
-	OnlySource     string
+	Part            int
+	ConfigFilePath  string
+	OnlySource      string
+	DestinationType string
 }{
-	Part:           -1,
-	ConfigFilePath: "pyproject.toml",
-	OnlySource:     "",
+	Part:            -1,
+	ConfigFilePath:  "pyproject.toml",
+	OnlySource:      "",
+	DestinationType: "",
 }
 
 // Main runs the application
@@ -47,6 +49,7 @@ func main() {
 	flag.IntVar(&Flags.Part, "part", -1, "The part we want to focus on e.g. web.x.y.z, if we pick 1, we will show x")
 	flag.StringVar(&Flags.ConfigFilePath, "config", "pyproject.toml", "Path to the TOML configuration file")
 	flag.StringVar(&Flags.OnlySource, "only-source", "", "Only show edges from this source package")
+	flag.StringVar(&Flags.DestinationType, "destination-type", "", "Filter edges by destination type (e.g., 'package', 'module')")
 	flag.Parse()
 
 	// Read TOML file
@@ -73,6 +76,10 @@ func main() {
 				destination := getPartValue(parts[1])
 
 				if Flags.OnlySource != "" && !strings.Contains(source, Flags.OnlySource) {
+					continue
+				}
+
+				if Flags.DestinationType != "" && !strings.Contains(destination, Flags.DestinationType) {
 					continue
 				}
 

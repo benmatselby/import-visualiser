@@ -121,6 +121,7 @@ func main() {
 
 	err = handleRendering(edges)
 	if err != nil {
+		fmt.Println(err)
 		os.Exit(2)
 	}
 }
@@ -162,8 +163,7 @@ func handleRendering(edges []string) error {
 	case "stdout":
 		output = StdoutOutput{}
 	default:
-		fmt.Println("Invalid renderer specified. Use 'stdout' or 'mermaid'.")
-		os.Exit(4)
+		return fmt.Errorf("invalid renderer specified. Use 'stdout' or 'mermaid'")
 	}
 
 	return output.Write(edges)

@@ -98,8 +98,8 @@ func main() {
 		for _, mapping := range contract.IgnoreImports {
 			parts := strings.Split(mapping, "->")
 			if len(parts) == 2 {
-				source := getPartValue(parts[0])
-				destination := getPartValue(parts[1])
+				source := parts[0]
+				destination := parts[1]
 
 				if Flags.OnlySource != "" && !strings.Contains(source, Flags.OnlySource) {
 					continue
@@ -108,6 +108,9 @@ func main() {
 				if Flags.DestinationType != "" && !strings.Contains(destination, Flags.DestinationType) {
 					continue
 				}
+
+				source = getPartValue(parts[0])
+				destination = getPartValue(parts[1])
 
 				edge := fmt.Sprintf("%s --> %s", source, destination)
 
